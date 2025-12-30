@@ -5,16 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BiblioConnect - Minha Estante Inteligente</title>
     
-    <!-- Tailwind CSS para Estilização -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- React e Babel para funcionar direto no navegador -->
+    <!-- React e Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Ícones e Fontes -->
+    <!-- Ícones Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Fontes Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
 
     <style>
@@ -22,7 +24,8 @@
         h1, h2, h3, .font-serif { font-family: 'Playfair Display', serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .book-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
+        .custom-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02); }
+        .active-tab { color: #4f46e5; transform: scale(1.1); }
     </style>
 </head>
 <body>
@@ -30,32 +33,29 @@
 
     <script type="text/babel">
         const { useState, useMemo, useEffect } = React;
-        
-        // Ícones do Lucide-React adaptados para uso via CDN
+
+        // Utilitário para ícones Lucide
         const Icon = ({ name, size = 24, className = "" }) => {
-            const [iconSvg, setIconSvg] = useState("");
             useEffect(() => {
-                if (window.lucide) {
-                    const svg = window.lucide.createIcons();
-                }
-            }, []);
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
             return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
         };
 
-        // Base de dados completa baseada em suas fotos
+        // Base de Dados Consolidada
         const ALL_BOOKS = [
-            { id: 1, titulo: "Sobre a Brevidade da Vida", autor: "Sêneca", paginas: 96, genero: "Filosofia Estoica", tipo: "Físico", trilha: "Mente Humana", capa: "bg-stone-800 text-white", sinopse: "Um tratado sobre como valorizar o tempo e não desperdiçá-lo com futilidades.", destaque: "Fim de Ano" },
-            { id: 2, titulo: "Feliz por Nada", autor: "Martha Medeiros", paginas: 224, genero: "Crônicas", tipo: "Físico", trilha: "Leveza", capa: "bg-pink-100 text-pink-800", sinopse: "Textos sobre encontrar felicidade nas coisas simples do dia a dia.", destaque: "Leitura Respiro" },
-            { id: 3, titulo: "O Alquimista", autor: "Paulo Coelho", paginas: 208, genero: "Fábula", tipo: "Físico", trilha: "Propósito", capa: "bg-yellow-600 text-white", sinopse: "A busca de um jovem por seu tesouro e sua Lenda Pessoal.", destaque: "Metas 2026" },
-            { id: 4, titulo: "Vidas Secas", autor: "Graciliano Ramos", paginas: 176, genero: "Clássico Brasileiro", tipo: "Físico", trilha: "Sociedade", capa: "bg-orange-200 text-orange-900", sinopse: "A vida de retirantes no sertão, focada na luta pela sobrevivência." },
-            { id: 5, titulo: "O Cortiço", autor: "Aluísio Azevedo", paginas: 256, genero: "Naturalismo", tipo: "Físico", trilha: "Sociedade", capa: "bg-amber-100", sinopse: "A vida coletiva no Rio de Janeiro e a influência do meio no homem." },
-            { id: 6, titulo: "Inteligência Emocional", autor: "Daniel Goleman", paginas: 384, genero: "Psicologia", tipo: "Digital", trilha: "Mente Humana", capa: "bg-blue-600 text-white", sinopse: "Por que o controle das emoções é mais importante que o QI." },
-            { id: 7, titulo: "Dom Quixote", autor: "Miguel de Cervantes", paginas: 1033, genero: "Épico", tipo: "Físico", trilha: "Literatura", capa: "bg-yellow-50", sinopse: "O cavaleiro que via gigantes em moinhos de vento." },
-            { id: 8, titulo: "Drácula", autor: "Bram Stoker", paginas: 480, genero: "Terror Gótico", tipo: "Físico", trilha: "Literatura", capa: "bg-gray-900 text-white", sinopse: "O nascimento do mito moderno do vampiro." },
-            { id: 9, titulo: "2041", autor: "Kai-Fu Lee", paginas: 480, genero: "Tecnologia", tipo: "Digital", trilha: "Futuro", capa: "bg-indigo-700 text-white", sinopse: "Como a Inteligência Artificial mudará o mundo em 20 anos." },
-            { id: 10, titulo: "Crime e Castigo", autor: "Fiódor Dostoiévski", paginas: 592, genero: "Clássico Russo", tipo: "Físico", trilha: "Mente Humana", capa: "bg-rose-900 text-white", sinopse: "O tormento psicológico de um jovem assassino em busca de redenção." },
-            { id: 11, titulo: "Vigotski: Formação Social da Mente", autor: "L. S. Vigotski", paginas: 192, genero: "Pedagogia", tipo: "Físico", trilha: "Mente Humana", capa: "bg-emerald-200", sinopse: "A relação entre o desenvolvimento humano e a cultura." },
-            { id: 12, titulo: "O Código Da Vinci", autor: "Dan Brown", paginas: 432, genero: "Suspense", tipo: "Físico", trilha: "Mistério", capa: "bg-red-900 text-white", sinopse: "Uma trama que envolve sociedades secretas e história da arte." }
+            { id: 1, titulo: "Vidas Secas", autor: "Graciliano Ramos", paginas: 176, genero: "Clássico Brasileiro", tipo: "Físico", trilha: "Sociedade", capa: "bg-orange-200 text-orange-900", sinopse: "A jornada de uma família de retirantes no sertão nordestino lutando contra a seca e a opressão social." },
+            { id: 2, titulo: "O Cortiço", autor: "Aluísio Azevedo", paginas: 256, genero: "Naturalismo", tipo: "Físico", trilha: "Sociedade", capa: "bg-amber-100 text-amber-900", sinopse: "O retrato cru da vida coletiva em uma estalagem carioca onde o meio molda o homem." },
+            { id: 3, titulo: "Dom Quixote", autor: "Miguel de Cervantes", paginas: 1033, genero: "Clássico Mundial", tipo: "Físico", trilha: "Literatura", capa: "bg-yellow-50 text-stone-800", sinopse: "As aventuras do cavaleiro da triste figura que desafia a realidade por seus ideais." },
+            { id: 4, titulo: "Inteligência Emocional", autor: "Daniel Goleman", paginas: 384, genero: "Psicologia", tipo: "Digital", trilha: "Mente Humana", capa: "bg-blue-600 text-white", sinopse: "O livro que redefine o que é ser inteligente, focando nas habilidades emocionais para o sucesso." },
+            { id: 5, titulo: "Ultra-aprendizado", autor: "Scott H. Young", paginas: 304, genero: "Desenvolvimento", tipo: "Digital", trilha: "Produtividade", capa: "bg-red-500 text-white", sinopse: "Estratégias para dominar habilidades complexas em tempo recorde." },
+            { id: 6, titulo: "Drácula", autor: "Bram Stoker", paginas: 480, genero: "Terror Gótico", tipo: "Físico", trilha: "Literatura", capa: "bg-gray-900 text-white", sinopse: "A luta clássica contra o Conde Drácula narrada através de cartas e diários." },
+            { id: 7, titulo: "2041", autor: "Kai-Fu Lee", paginas: 480, genero: "Tecnologia", tipo: "Digital", trilha: "Futuro", capa: "bg-indigo-700 text-white", sinopse: "Como a IA mudará o mundo nos próximos 20 anos através de contos e análises." },
+            { id: 8, titulo: "Crime e Castigo", autor: "Fiódor Dostoiévski", paginas: 592, genero: "Clássico Russo", tipo: "Físico", trilha: "Mente Humana", capa: "bg-rose-950 text-white", sinopse: "O tormento psicológico de Raskólnikov após cometer um crime por uma 'causa maior'." },
+            { id: 9, titulo: "Sobre a Brevidade da Vida", autor: "Sêneca", paginas: 96, genero: "Filosofia Estoica", tipo: "Físico", trilha: "Reflexão", capa: "bg-stone-800 text-white", sinopse: "Reflexões essenciais sobre como parar de desperdiçar o tempo e viver com propósito.", destaque: "Fim de Ano" },
+            { id: 10, titulo: "O Alquimista", autor: "Paulo Coelho", paginas: 208, genero: "Fábula", tipo: "Físico", trilha: "Reflexão", capa: "bg-yellow-600 text-white", sinopse: "A jornada de Santiago para encontrar seu tesouro e realizar sua Lenda Pessoal.", destaque: "Fim de Ano" },
+            { id: 11, titulo: "A Menina que Roubava Livros", autor: "Markus Zusak", paginas: 480, genero: "Ficção Histórica", tipo: "Físico", trilha: "Sociedade", capa: "bg-slate-300 text-slate-800", sinopse: "Liesel encontra refúgio nos livros durante os horrores da Alemanha nazista." },
+            { id: 12, titulo: "O Meu Pé de Laranja Lima", autor: "J. M. Vasconcelos", paginas: 192, genero: "Clássico Juvenil", tipo: "Físico", trilha: "Literatura", capa: "bg-green-100 text-green-800", sinopse: "A emocionante história de Zezé, um menino que descobre a dor e a amizade através da imaginação." }
         ];
 
         const App = () => {
@@ -64,10 +64,8 @@
             const [selectedBook, setSelectedBook] = useState(null);
             const [filter, setFilter] = useState("Todos");
 
-            useEffect(() => {
-                // Ativar ícones do Lucide após renderizar
-                if (window.lucide) window.lucide.createIcons();
-            }, [activeTab, filter, selectedBook, searchTerm]);
+            // Atualiza ícones após mudanças de estado
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [activeTab, filter, selectedBook, searchTerm]);
 
             const filteredBooks = useMemo(() => {
                 return ALL_BOOKS.filter(b => {
@@ -81,78 +79,95 @@
             const trilhas = ["Todos", ...new Set(ALL_BOOKS.map(b => b.trilha))];
 
             return (
-                <div className="min-h-screen bg-slate-50 flex flex-col max-w-md mx-auto shadow-2xl relative overflow-x-hidden border-x border-slate-200">
+                <div className="min-h-screen flex flex-col bg-slate-50 max-w-2xl mx-auto shadow-2xl relative overflow-x-hidden border-x border-slate-100">
                     
-                    {/* Header */}
-                    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-6 py-6 flex items-center justify-between border-b border-slate-100">
+                    {/* Cabeçalho */}
+                    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl px-6 py-6 flex items-center justify-between border-b border-slate-100">
                         <div>
                             <h1 className="text-2xl font-serif font-black text-indigo-950">BiblioConnect</h1>
                             <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Sua Mente Expandida</p>
                         </div>
-                        <div className="bg-indigo-600 text-white w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
-                            <Icon name="book-open" size={20} />
+                        <div className="bg-indigo-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                            <Icon name="book-open" size={24} />
                         </div>
                     </header>
 
                     {/* Conteúdo Principal */}
-                    <main className="flex-1 px-6 pt-6 pb-24 overflow-y-auto">
+                    <main className="flex-1 px-6 pt-6 pb-28">
                         
                         {activeTab === 'Home' && (
                             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <section className="bg-gradient-to-br from-indigo-700 to-indigo-900 rounded-[32px] p-6 text-white shadow-xl relative overflow-hidden">
+                                {/* Banner de Boas-Vindas */}
+                                <section className="bg-gradient-to-br from-indigo-700 to-indigo-900 rounded-[40px] p-8 text-white shadow-xl relative overflow-hidden">
                                     <div className="relative z-10">
-                                        <h2 className="text-xl font-serif italic mb-2">Boas leituras, explorador!</h2>
-                                        <p className="text-indigo-100 text-xs mb-6">Você tem {ALL_BOOKS.length} livros prontos para serem debatidos.</p>
+                                        <h2 className="text-2xl font-serif italic mb-2">Qual o plano para hoje?</h2>
+                                        <p className="text-indigo-100 text-sm mb-6 max-w-[200px]">Você tem {ALL_BOOKS.length} livros catalogados na sua estante.</p>
                                         <button 
                                             onClick={() => setActiveTab('Estante')}
-                                            className="bg-white text-indigo-950 px-6 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2"
+                                            className="bg-white text-indigo-950 px-8 py-3 rounded-2xl text-xs font-black flex items-center gap-2 active:scale-95 transition-all shadow-lg"
                                         >
-                                            Ver Estante Completa <Icon name="chevron-right" size={14} />
+                                            Explorar Estante <Icon name="chevron-right" size={14} />
                                         </button>
                                     </div>
-                                    <Icon name="sparkles" className="absolute -right-6 -bottom-6 text-white/10 w-40 h-40" />
+                                    <Icon name="sparkles" className="absolute -right-8 -bottom-8 text-white/10 w-48 h-48" />
                                 </section>
 
+                                {/* Indicações Especiais */}
                                 <section>
-                                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                        <Icon name="calendar" size={18} className="text-indigo-500" /> Indicações de Dezembro
-                                    </h3>
-                                    <div className="space-y-3">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                            <Icon name="award" size={20} className="text-amber-500" /> Especial Fim de Ano
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4">
                                         {ALL_BOOKS.filter(b => b.destaque).map(book => (
-                                            <div key={book.id} onClick={() => setSelectedBook(book)} className="bg-white p-4 rounded-3xl border border-slate-100 flex items-center gap-4 cursor-pointer active:scale-95 transition-all shadow-sm">
-                                                <div className={`w-12 h-16 rounded-xl flex items-center justify-center text-[6px] font-bold text-center p-1 ${book.capa}`}>{book.titulo}</div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-[8px] font-black text-indigo-500 uppercase">{book.destaque}</p>
-                                                    <h4 className="font-bold text-sm truncate">{book.titulo}</h4>
-                                                    <p className="text-[10px] text-slate-400">{book.autor}</p>
+                                            <div key={book.id} onClick={() => setSelectedBook(book)} className="bg-white p-5 rounded-[32px] border border-slate-100 flex items-center gap-5 cursor-pointer active:scale-[0.98] transition-all shadow-sm hover:shadow-md">
+                                                <div className={`w-16 h-20 rounded-2xl flex items-center justify-center text-[8px] font-bold text-center p-2 shadow-inner ${book.capa}`}>{book.titulo}</div>
+                                                <div className="flex-1">
+                                                    <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">{book.destaque}</span>
+                                                    <h4 className="font-bold text-slate-800">{book.titulo}</h4>
+                                                    <p className="text-xs text-slate-400">{book.autor}</p>
                                                 </div>
-                                                <Icon name="chevron-right" size={16} className="text-slate-300" />
+                                                <Icon name="chevron-right" size={20} className="text-slate-300" />
                                             </div>
                                         ))}
                                     </div>
                                 </section>
+
+                                {/* Frase Inspiradora */}
+                                <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
+                                    <Icon name="quote" className="text-indigo-100 mb-2" size={32} />
+                                    <p className="italic text-slate-600 text-base leading-relaxed font-medium">
+                                        "Um livro é um dispositivo para acender a imaginação."
+                                    </p>
+                                </div>
                             </div>
                         )}
 
                         {activeTab === 'Estante' && (
                             <div className="space-y-6 animate-in fade-in duration-300">
+                                {/* Barra de Pesquisa */}
                                 <div className="space-y-4">
-                                    <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"><Icon name="search" size={18} /></div>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+                                            <Icon name="search" size={20} />
+                                        </div>
                                         <input 
                                             type="text" 
-                                            placeholder="Título ou autor..."
-                                            className="w-full bg-white rounded-2xl py-4 pl-12 pr-4 text-sm font-medium border border-slate-200 outline-none focus:border-indigo-400 transition-all"
+                                            placeholder="Qual livro você procura?"
+                                            className="w-full bg-white rounded-[24px] py-5 pl-14 pr-6 text-sm font-semibold border border-slate-200 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 transition-all"
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                         />
                                     </div>
-                                    <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+                                    
+                                    {/* Filtros de Trilha */}
+                                    <div className="flex gap-2 overflow-x-auto no-scrollbar py-2 -mx-6 px-6">
                                         {trilhas.map(t => (
                                             <button 
                                                 key={t}
                                                 onClick={() => setFilter(t)}
-                                                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${filter === t ? "bg-indigo-600 text-white" : "bg-white text-slate-500 border border-slate-200"}`}
+                                                className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all shadow-sm ${filter === t ? "bg-indigo-600 text-white scale-105" : "bg-white text-slate-500 border border-slate-200"}`}
                                             >
                                                 {t}
                                             </button>
@@ -160,61 +175,111 @@
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                {/* Grade de Livros */}
+                                <div className="grid grid-cols-2 gap-6">
                                     {filteredBooks.map(book => (
-                                        <div key={book.id} onClick={() => setSelectedBook(book)} className="bg-white rounded-[32px] p-4 border border-slate-100 shadow-sm active:scale-95 transition-all">
-                                            <div className={`aspect-[3/4] rounded-2xl mb-3 flex flex-col items-center justify-center p-4 text-center ${book.capa}`}>
-                                                <h4 className="font-serif font-bold text-[10px] sm:text-xs italic leading-tight">{book.titulo}</h4>
+                                        <div key={book.id} onClick={() => setSelectedBook(book)} className="bg-white rounded-[40px] p-4 border border-slate-100 shadow-sm active:scale-95 transition-all cursor-pointer group">
+                                            <div className={`aspect-[3/4] rounded-[28px] mb-4 flex flex-col items-center justify-center p-6 text-center shadow-inner relative overflow-hidden ${book.capa}`}>
+                                                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                <h4 className="font-serif font-bold text-[10px] sm:text-xs italic leading-tight z-10">{book.titulo}</h4>
+                                                <p className="text-[8px] mt-2 opacity-60 font-bold z-10">{book.autor}</p>
                                             </div>
-                                            <h3 className="font-bold text-xs truncate">{book.titulo}</h3>
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">{book.trilha}</p>
+                                            <h3 className="font-bold text-xs px-1 text-slate-800 truncate">{book.titulo}</h3>
+                                            <p className="text-[9px] px-1 text-indigo-500 font-black uppercase mt-1 tracking-tighter">{book.trilha}</p>
                                         </div>
                                     ))}
                                 </div>
+                                {filteredBooks.length === 0 && (
+                                    <div className="text-center py-20 opacity-40">
+                                        <Icon name="search-x" className="mx-auto mb-2" size={40} />
+                                        <p className="font-bold">Nenhum livro encontrado.</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </main>
 
-                    {/* Navegação */}
-                    <nav className="fixed bottom-6 left-6 right-6 bg-white/90 backdrop-blur-2xl border border-slate-200 rounded-full px-8 py-4 shadow-2xl z-40 flex items-center justify-between">
-                        <button onClick={() => setActiveTab('Home')} className={`flex flex-col items-center gap-1 ${activeTab === 'Home' ? "text-indigo-600" : "text-slate-400"}`}>
-                            <Icon name="home" size={22} />
-                            <span className="text-[9px] font-black uppercase">Início</span>
+                    {/* Barra de Navegação Inferior */}
+                    <nav className="fixed bottom-6 left-6 right-6 bg-white/80 backdrop-blur-2xl border border-slate-200 rounded-full px-10 py-5 shadow-2xl z-40 flex items-center justify-between">
+                        <button onClick={() => setActiveTab('Home')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'Home' ? "active-tab" : "text-slate-400"}`}>
+                            <Icon name="home" size={24} strokeWidth={activeTab === 'Home' ? 2.5 : 2} />
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Início</span>
                         </button>
-                        <button onClick={() => setActiveTab('Estante')} className={`flex flex-col items-center gap-1 ${activeTab === 'Estante' ? "text-indigo-600" : "text-slate-400"}`}>
-                            <Icon name="layout-grid" size={22} />
-                            <span className="text-[9px] font-black uppercase">Estante</span>
+                        <button onClick={() => setActiveTab('Estante')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'Estante' ? "active-tab" : "text-slate-400"}`}>
+                            <Icon name="layout-grid" size={24} strokeWidth={activeTab === 'Estante' ? 2.5 : 2} />
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Estante</span>
                         </button>
-                        <button onClick={() => alert('Em breve: Mais dados do seu progresso!')} className="flex flex-col items-center gap-1 text-slate-400">
-                            <Icon name="pie-chart" size={22} />
-                            <span className="text-[9px] font-black uppercase">Dados</span>
+                        <button onClick={() => setActiveTab('Home')} className="flex flex-col items-center gap-1.5 text-slate-400 opacity-30">
+                            <Icon name="pie-chart" size={24} />
+                            <span className="text-[9px] font-black uppercase tracking-tighter">Dados</span>
                         </button>
                     </nav>
 
-                    {/* Modal */}
+                    {/* Modal de Detalhes */}
                     {selectedBook && (
-                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center p-4">
-                            <div className="bg-white w-full max-w-md rounded-[40px] p-8 animate-in slide-in-from-bottom duration-300 max-h-[80vh] overflow-y-auto relative">
-                                <button onClick={() => setSelectedBook(null)} className="absolute top-6 right-6 bg-slate-100 p-2 rounded-full text-slate-400"><Icon name="x" size={20} /></button>
-                                <h2 className="text-3xl font-serif font-bold mb-1">{selectedBook.titulo}</h2>
-                                <p className="text-slate-500 mb-6 font-medium">{selectedBook.autor}</p>
-                                
-                                <div className="grid grid-cols-3 gap-3 mb-8 text-center">
-                                    <div className="bg-slate-50 p-3 rounded-2xl"><Icon name="book-text" size={16} className="mx-auto mb-1 text-indigo-500" /><p className="text-[8px] font-bold text-slate-400 uppercase">Páginas</p><p className="font-black text-sm">{selectedBook.paginas}</p></div>
-                                    <div className="bg-slate-50 p-3 rounded-2xl"><Icon name="clock" size={16} className="mx-auto mb-1 text-indigo-500" /><p className="text-[8px] font-bold text-slate-400 uppercase">Leitura</p><p className="font-black text-sm">~{Math.round(selectedBook.paginas/40)}h</p></div>
-                                    <div className="bg-slate-50 p-3 rounded-2xl"><Icon name="target" size={16} className="mx-auto mb-1 text-indigo-500" /><p className="text-[8px] font-bold text-slate-400 uppercase">Trilha</p><p className="font-black text-[9px] truncate uppercase">{selectedBook.trilha}</p></div>
-                                </div>
-
-                                <p className="text-slate-600 text-sm leading-relaxed mb-8">{selectedBook.sinopse}</p>
-
-                                <div className="bg-indigo-50 rounded-3xl p-6 mb-8 border border-indigo-100 text-center">
-                                    <h4 className="text-[10px] font-black uppercase text-indigo-800 mb-2">Espaço do Insight</h4>
-                                    <textarea className="w-full bg-white border border-indigo-200 rounded-2xl p-4 text-xs font-medium focus:ring-4 focus:ring-indigo-100 outline-none" placeholder="O que você está aprendendo?"></textarea>
-                                </div>
-
-                                <button className="w-full bg-indigo-950 text-white font-black py-5 rounded-[28px] flex items-center justify-center gap-3">
-                                    <Icon name="message-square" size={20} /> "vamos conversar sobre esse livro"
+                        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-end justify-center p-4 animate-in fade-in duration-300">
+                            <div className="bg-white w-full max-w-lg rounded-[48px] p-10 animate-in slide-in-from-bottom duration-500 max-h-[85vh] overflow-y-auto relative">
+                                <button 
+                                    onClick={() => setSelectedBook(null)} 
+                                    className="absolute top-8 right-8 bg-slate-100 p-3 rounded-full text-slate-400 active:scale-90 transition-all"
+                                >
+                                    <Icon name="x" size={20} />
                                 </button>
+                                
+                                <div className="mb-8">
+                                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-2 block">{selectedBook.trilha}</span>
+                                    <h2 className="text-4xl font-serif font-black text-slate-900 leading-tight mb-2">{selectedBook.titulo}</h2>
+                                    <p className="text-lg text-slate-400 font-medium italic">{selectedBook.autor}</p>
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-4 mb-10">
+                                    <div className="bg-slate-50 px-4 py-5 rounded-[32px] border border-slate-100 text-center">
+                                        <Icon name="book-text" size={18} className="mx-auto mb-2 text-indigo-500" />
+                                        <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest">Páginas</p>
+                                        <p className="font-black text-base">{selectedBook.paginas}</p>
+                                    </div>
+                                    <div className="bg-slate-50 px-4 py-5 rounded-[32px] border border-slate-100 text-center">
+                                        <Icon name="clock" size={18} className="mx-auto mb-2 text-indigo-500" />
+                                        <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest">Leitura</p>
+                                        <p className="font-black text-base">~{Math.round(selectedBook.paginas/40)}h</p>
+                                    </div>
+                                    <div className="bg-slate-50 px-4 py-5 rounded-[32px] border border-slate-100 text-center">
+                                        <Icon name="tag" size={18} className="mx-auto mb-2 text-indigo-500" />
+                                        <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest">Gênero</p>
+                                        <p className="font-black text-[9px] uppercase leading-tight truncate">{selectedBook.genero}</p>
+                                    </div>
+                                </div>
+
+                                <div className="mb-10">
+                                    <h3 className="font-black text-[11px] uppercase text-slate-900 tracking-widest mb-4 flex items-center gap-2">
+                                        <Icon name="info" size={16} className="text-indigo-500" /> Sinopse Oficial
+                                    </h3>
+                                    <p className="text-slate-600 text-base leading-relaxed font-medium">
+                                        {selectedBook.sinopse}
+                                    </p>
+                                </div>
+
+                                <div className="bg-indigo-50 rounded-[40px] p-8 mb-10 border border-indigo-100 relative overflow-hidden">
+                                    <div className="relative z-10">
+                                        <h4 className="text-[11px] font-black uppercase text-indigo-800 mb-4 flex items-center gap-2 tracking-widest">
+                                            <Icon name="message-circle" size={16} /> Meu Diário de Insight
+                                        </h4>
+                                        <textarea 
+                                            className="w-full bg-white/70 backdrop-blur-sm border border-indigo-100 rounded-3xl p-5 text-sm font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-indigo-200 min-h-[120px]" 
+                                            placeholder="O que este livro está te ensinando agora?"
+                                        ></textarea>
+                                    </div>
+                                    <Icon name="brain" className="absolute -right-4 -bottom-4 text-indigo-600/5 w-32 h-32" />
+                                </div>
+
+                                <button 
+                                    onClick={() => alert(`Iniciando discussão sobre: ${selectedBook.titulo}`)}
+                                    className="w-full bg-indigo-950 text-white font-black py-6 rounded-[32px] flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-xl shadow-indigo-100 text-lg"
+                                >
+                                    <Icon name="message-square" size={24} /> 
+                                    "vamos conversar sobre esse livro"
+                                </button>
+                                <div className="h-6"></div>
                             </div>
                         </div>
                     )}
