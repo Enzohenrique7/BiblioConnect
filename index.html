@@ -3,20 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BiblioConnect - Minha Estante Inteligente</title>
+    <title>BiblioConnect - Sua Estante Inteligente</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Bibliotecas externas via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React e Babel -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Ícones Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Fontes Google -->
+    <!-- Fontes do Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
 
     <style>
@@ -24,8 +20,10 @@
         h1, h2, h3, .font-serif { font-family: 'Playfair Display', serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-shadow { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02); }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .active-tab { color: #4f46e5; transform: scale(1.1); }
+        .glass-effect { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-top: 1px solid rgba(226, 232, 240, 0.8); }
     </style>
 </head>
 <body>
@@ -34,7 +32,6 @@
     <script type="text/babel">
         const { useState, useMemo, useEffect } = React;
 
-        // Utilitário para ícones Lucide
         const Icon = ({ name, size = 24, className = "" }) => {
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
@@ -42,127 +39,158 @@
             return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
         };
 
-        // Base de Dados Consolidada
-        const ALL_BOOKS = [
-            { id: 1, titulo: "Vidas Secas", autor: "Graciliano Ramos", paginas: 176, genero: "Clássico Brasileiro", tipo: "Físico", trilha: "Sociedade", capa: "bg-orange-200 text-orange-900", sinopse: "A jornada de uma família de retirantes no sertão nordestino lutando contra a seca e a opressão social." },
-            { id: 2, titulo: "O Cortiço", autor: "Aluísio Azevedo", paginas: 256, genero: "Naturalismo", tipo: "Físico", trilha: "Sociedade", capa: "bg-amber-100 text-amber-900", sinopse: "O retrato cru da vida coletiva em uma estalagem carioca onde o meio molda o homem." },
-            { id: 3, titulo: "Dom Quixote", autor: "Miguel de Cervantes", paginas: 1033, genero: "Clássico Mundial", tipo: "Físico", trilha: "Literatura", capa: "bg-yellow-50 text-stone-800", sinopse: "As aventuras do cavaleiro da triste figura que desafia a realidade por seus ideais." },
-            { id: 4, titulo: "Inteligência Emocional", autor: "Daniel Goleman", paginas: 384, genero: "Psicologia", tipo: "Digital", trilha: "Mente Humana", capa: "bg-blue-600 text-white", sinopse: "O livro que redefine o que é ser inteligente, focando nas habilidades emocionais para o sucesso." },
-            { id: 5, titulo: "Ultra-aprendizado", autor: "Scott H. Young", paginas: 304, genero: "Desenvolvimento", tipo: "Digital", trilha: "Produtividade", capa: "bg-red-500 text-white", sinopse: "Estratégias para dominar habilidades complexas em tempo recorde." },
-            { id: 6, titulo: "Drácula", autor: "Bram Stoker", paginas: 480, genero: "Terror Gótico", tipo: "Físico", trilha: "Literatura", capa: "bg-gray-900 text-white", sinopse: "A luta clássica contra o Conde Drácula narrada através de cartas e diários." },
-            { id: 7, titulo: "2041", autor: "Kai-Fu Lee", paginas: 480, genero: "Tecnologia", tipo: "Digital", trilha: "Futuro", capa: "bg-indigo-700 text-white", sinopse: "Como a IA mudará o mundo nos próximos 20 anos através de contos e análises." },
-            { id: 8, titulo: "Crime e Castigo", autor: "Fiódor Dostoiévski", paginas: 592, genero: "Clássico Russo", tipo: "Físico", trilha: "Mente Humana", capa: "bg-rose-950 text-white", sinopse: "O tormento psicológico de Raskólnikov após cometer um crime por uma 'causa maior'." },
-            { id: 9, titulo: "Sobre a Brevidade da Vida", autor: "Sêneca", paginas: 96, genero: "Filosofia Estoica", tipo: "Físico", trilha: "Reflexão", capa: "bg-stone-800 text-white", sinopse: "Reflexões essenciais sobre como parar de desperdiçar o tempo e viver com propósito.", destaque: "Fim de Ano" },
-            { id: 10, titulo: "O Alquimista", autor: "Paulo Coelho", paginas: 208, genero: "Fábula", tipo: "Físico", trilha: "Reflexão", capa: "bg-yellow-600 text-white", sinopse: "A jornada de Santiago para encontrar seu tesouro e realizar sua Lenda Pessoal.", destaque: "Fim de Ano" },
-            { id: 11, titulo: "A Menina que Roubava Livros", autor: "Markus Zusak", paginas: 480, genero: "Ficção Histórica", tipo: "Físico", trilha: "Sociedade", capa: "bg-slate-300 text-slate-800", sinopse: "Liesel encontra refúgio nos livros durante os horrores da Alemanha nazista." },
-            { id: 12, titulo: "O Meu Pé de Laranja Lima", autor: "J. M. Vasconcelos", paginas: 192, genero: "Clássico Juvenil", tipo: "Físico", trilha: "Literatura", capa: "bg-green-100 text-green-800", sinopse: "A emocionante história de Zezé, um menino que descobre a dor e a amizade através da imaginação." }
+        const LIBRARY_DATA = [
+            // TRILHA: SOCIEDADE & REALIDADE
+            { id: 1, titulo: "Vidas Secas", autor: "Graciliano Ramos", paginas: 176, genero: "Regionalismo", trilha: "Sociedade", capa: "bg-orange-200 text-orange-950", sinopse: "A luta pela sobrevivência de uma família de retirantes no sertão nordestino." },
+            { id: 2, titulo: "O Cortiço", autor: "Aluísio Azevedo", paginas: 256, genero: "Naturalismo", trilha: "Sociedade", capa: "bg-amber-100 text-amber-900", sinopse: "O retrato cru da vida coletiva e a influência do meio no homem." },
+            { id: 3, titulo: "Um País Chamado Favela", autor: "Meirelles e Athayde", paginas: 220, genero: "Sociologia", trilha: "Sociedade", capa: "bg-emerald-100 text-emerald-900", sinopse: "Uma análise profunda sobre o potencial econômico e social das favelas brasileiras." },
+            { id: 4, titulo: "Como o Racismo Criou o Brasil", autor: "Jessé Souza", paginas: 384, genero: "Sociologia", trilha: "Sociedade", capa: "bg-stone-300 text-stone-900", sinopse: "As bases estruturais da desigualdade e do preconceito na história brasileira." },
+            { id: 5, titulo: "Meninos sem Pátria", autor: "Luiz Puntel", paginas: 160, genero: "Infantojuvenil", trilha: "Sociedade", capa: "bg-blue-100 text-blue-900", sinopse: "O exílio de uma família brasileira durante a ditadura militar." },
+            { id: 6, titulo: "Nos Rastros dos Restos", autor: "Rosana Miziara", paginas: 180, genero: "Estudo Social", trilha: "Sociedade", capa: "bg-gray-200 text-gray-900", sinopse: "Um estudo sobre o impacto social e ambiental do lixo em grandes centros urbanos." },
+
+            // TRILHA: MENTE & PSICOLOGIA
+            { id: 7, titulo: "Inteligência Emocional", autor: "Daniel Goleman", paginas: 384, genero: "Psicologia", trilha: "Mente Humana", capa: "bg-blue-600 text-white", sinopse: "Como lidar com as emoções para atingir o sucesso pessoal e profissional." },
+            { id: 8, titulo: "A Psicologia do Sonho", autor: "Sigmund Freud", paginas: 150, genero: "Psicanálise", trilha: "Mente Humana", capa: "bg-purple-900 text-white", sinopse: "A obra clássica que introduz a interpretação dos sonhos como caminho ao inconsciente." },
+            { id: 9, titulo: "Você é Insubstituível", autor: "Augusto Cury", paginas: 120, genero: "Autoajuda", trilha: "Mente Humana", capa: "bg-cyan-100 text-cyan-900", sinopse: "Um guia sobre a valorização da vida e o cuidado com a saúde emocional." },
+            { id: 10, titulo: "A Formação Social da Mente", autor: "L. S. Vigotski", paginas: 192, genero: "Pedagogia", trilha: "Mente Humana", capa: "bg-emerald-200 text-emerald-950", sinopse: "Como a interação social e a cultura moldam nossas funções mentais superiores." },
+            { id: 11, titulo: "A Chave da Virada", autor: "Niek e Raso", paginas: 140, genero: "Emocional", trilha: "Mente Humana", capa: "bg-indigo-100 text-indigo-900", sinopse: "Estratégias para mudança de mentalidade e bem-estar psicológico." },
+
+            // TRILHA: LITERATURA CLÁSSICA & ÉPICA
+            { id: 12, titulo: "A Divina Comédia", autor: "Dante Alighieri", paginas: 600, genero: "Épico", trilha: "Literatura", capa: "bg-red-900 text-white", sinopse: "A viagem alegórica de Dante pelo Inferno, Purgatório e Paraíso." },
+            { id: 13, titulo: "Dom Quixote", autor: "Miguel de Cervantes", paginas: 1033, genero: "Clássico", trilha: "Literatura", capa: "bg-yellow-50 text-stone-800", sinopse: "O fidalgo que vive aventuras fantásticas em sua luta por ideais de cavalaria." },
+            { id: 14, titulo: "Os Lusíadas", autor: "Luís de Camões", paginas: 440, genero: "Epopeia", trilha: "Literatura", capa: "bg-amber-200 text-amber-950", sinopse: "A celebração das grandes navegações portuguesas e da história de Portugal." },
+            { id: 15, titulo: "Crime e Castigo", autor: "Dostoiévski", paginas: 592, genero: "Clássico Russo", trilha: "Literatura", capa: "bg-rose-950 text-white", sinopse: "O tormento e a redenção de Raskólnikov após cometer um crime." },
+            { id: 16, titulo: "Memórias Póstumas de Brás Cubas", autor: "Machado de Assis", paginas: 220, genero: "Realismo", trilha: "Literatura", capa: "bg-stone-800 text-white", sinopse: "As memórias irônicas de um defunto autor analisando sua própria mediocridade." },
+            { id: 17, titulo: "Macbeth", autor: "Shakespeare", paginas: 120, genero: "Tragédia", trilha: "Literatura", capa: "bg-gray-950 text-red-500", sinopse: "Uma história sobre ambição desenfreada e a loucura pelo poder." },
+            { id: 18, titulo: "Hamlet", autor: "Shakespeare", paginas: 160, genero: "Tragédia", trilha: "Literatura", capa: "bg-slate-900 text-white", sinopse: "O dilema moral e existencial do príncipe da Dinamarca." },
+            { id: 19, titulo: "Sonho de uma Noite de Verão", autor: "Shakespeare", paginas: 110, genero: "Comédia", trilha: "Literatura", capa: "bg-violet-200 text-violet-900", sinopse: "Desencontros amorosos e magia em uma floresta habitada por fadas." },
+            { id: 20, titulo: "Senhora", autor: "José de Alencar", paginas: 240, genero: "Romantismo", trilha: "Literatura", capa: "bg-rose-100 text-rose-900", sinopse: "O drama de Aurélia Camargo em busca de vingança e amor na corte carioca." },
+            { id: 21, titulo: "Til", autor: "José de Alencar", paginas: 260, genero: "Regionalismo", trilha: "Literatura", capa: "bg-lime-100 text-lime-900", sinopse: "Mistério e vida no campo centrados na figura carismática de Berta." },
+            { id: 22, titulo: "A Cidade e as Serras", autor: "Eça de Queiroz", paginas: 250, genero: "Realismo", trilha: "Literatura", capa: "bg-green-100 text-green-900", sinopse: "A transição entre o excesso tecnológico urbano e a simplicidade bucólica." },
+            { id: 23, titulo: "Auto da Barca do Inferno", autor: "Gil Vicente", paginas: 80, genero: "Teatro", trilha: "Literatura", capa: "bg-slate-800 text-orange-400", sinopse: "O julgamento satírico das almas que tentam entrar no céu ou no inferno." },
+
+            // TRILHA: REFLEXÃO & FILOSOFIA
+            { id: 24, titulo: "Sobre a Brevidade da Vida", autor: "Sêneca", paginas: 96, genero: "Filosofia Estoica", trilha: "Reflexão", capa: "bg-zinc-800 text-white", sinopse: "Como valorizar o tempo e focar no que realmente importa na vida.", destaque: "Ano Novo" },
+            { id: 25, titulo: "O Banquete", autor: "Platão", paginas: 120, genero: "Filosofia", trilha: "Reflexão", capa: "bg-stone-100 text-stone-900", sinopse: "Diálogos clássicos sobre a natureza e a origem do Amor." },
+            { id: 26, titulo: "O Monge e o Executivo", autor: "James C. Hunter", paginas: 144, genero: "Liderança", trilha: "Reflexão", capa: "bg-blue-50 text-blue-900", sinopse: "Uma lição sobre como liderar servindo aos outros com empatia." },
+            { id: 27, titulo: "Introdução ao Estudo de Filosofia", autor: "Antônio Teles", paginas: 200, genero: "Filosofia", trilha: "Reflexão", capa: "bg-slate-100 text-slate-900", sinopse: "Um guia didático para compreender os grandes sistemas de pensamento." },
+            { id: 28, titulo: "Émile Durkheim", autor: "Jean-Claude Filloux", paginas: 110, genero: "Sociologia", trilha: "Reflexão", capa: "bg-stone-200 text-stone-800", sinopse: "Os conceitos fundamentais de um dos pais da sociologia moderna." },
+            { id: 29, titulo: "Hip Hop e a Filosofia", autor: "D. Darby", paginas: 220, genero: "Ética/Cultura", trilha: "Reflexão", capa: "bg-black text-yellow-500", sinopse: "Diálogos entre a cultura urbana e as grandes questões filosóficas." },
+            { id: 30, titulo: "Estórias de quem gosta de ensinar", autor: "Rubem Alves", paginas: 130, genero: "Educação", trilha: "Reflexão", capa: "bg-orange-50 text-orange-900", sinopse: "Crônicas poéticas sobre a arte de educar e aprender." },
+            { id: 31, titulo: "Ainda Existe Esperança", autor: "Enrique Chaij", paginas: 160, genero: "Autoajuda", trilha: "Reflexão", capa: "bg-emerald-50 text-emerald-900", sinopse: "Mensagens de otimismo e soluções positivas para a vida." },
+
+            // TRILHA: FUTURO & TECNOLOGIA
+            { id: 32, titulo: "2041", autor: "Kai-Fu Lee", paginas: 480, genero: "Tecnologia", trilha: "Futuro", capa: "bg-indigo-700 text-white", sinopse: "Ficção e análise técnica sobre o impacto da IA no mundo em 20 anos." },
+            { id: 33, titulo: "Os Nove Titãs da IA", autor: "Amy Webb", paginas: 352, genero: "Estratégia", trilha: "Futuro", capa: "bg-slate-900 text-indigo-400", sinopse: "Como as gigantes tech estão moldando o futuro da inteligência artificial." },
+            { id: 34, titulo: "Introdução à Computação", autor: "Larry Gonick", paginas: 250, genero: "Tecnologia", trilha: "Futuro", capa: "bg-yellow-400 text-black", sinopse: "Um guia visual para entender como os computadores realmente funcionam." },
+            { id: 35, titulo: "Marketing Real-Time", autor: "David Scott", paginas: 280, genero: "Marketing", trilha: "Futuro", capa: "bg-red-600 text-white", sinopse: "Como engajar clientes na velocidade da internet moderna." },
+
+            // TRILHA: PRODUTIVIDADE & GESTÃO
+            { id: 36, titulo: "Ultra-aprendizado", autor: "Scott H. Young", paginas: 304, genero: "Educação", trilha: "Produtividade", capa: "bg-red-500 text-white", sinopse: "Métodos para dominar habilidades complexas com extrema rapidez." },
+            { id: 37, titulo: "Como Fazer Amigos", autor: "Dale Carnegie", paginas: 260, genero: "Desenvolvimento", trilha: "Produtividade", capa: "bg-blue-800 text-white", sinopse: "O guia definitivo sobre comunicação e influência interpessoal." },
+            { id: 38, titulo: "Fora de Série (Outliers)", autor: "Malcolm Gladwell", paginas: 300, genero: "Sociologia", trilha: "Produtividade", capa: "bg-zinc-200 text-zinc-900", sinopse: "Os fatores escondidos que levam pessoas ao sucesso extraordinário." },
+            { id: 39, titulo: "O Indivíduo na Organização", autor: "J. F. Chanlat", paginas: 320, genero: "Gestão", trilha: "Produtividade", capa: "bg-slate-400 text-white", sinopse: "As dimensões humanas e subjetivas dentro das empresas." },
+            { id: 40, titulo: "Atos Societários", autor: "Renato Ochman", paginas: 400, genero: "Direito", trilha: "Produtividade", capa: "bg-indigo-900 text-white", sinopse: "Aspectos técnicos e jurídicos das relações em companhias." },
+
+            // TRILHA: FICÇÃO & SUSPENSE
+            { id: 41, titulo: "Jogos Vorazes", autor: "Suzanne Collins", paginas: 400, genero: "Distopia", trilha: "Ficção", capa: "bg-stone-900 text-amber-500", sinopse: "Uma luta brutal pela sobrevivência em um governo totalitário." },
+            { id: 42, titulo: "Drácula", autor: "Bram Stoker", paginas: 480, genero: "Terror", trilha: "Ficção", capa: "bg-black text-red-600", sinopse: "A origem do mito do vampiro contada através de diários." },
+            { id: 43, titulo: "Dorian Gray", autor: "Oscar Wilde", paginas: 230, genero: "Gótico", trilha: "Ficção", capa: "bg-emerald-950 text-white", sinopse: "O preço terrível da busca pela juventude e beleza eterna." },
+            { id: 44, titulo: "Wuthering Heights", autor: "Emily Brontë", paginas: 350, genero: "Drama", trilha: "Ficção", capa: "bg-slate-700 text-white", sinopse: "Uma história de amor obsessivo e vingança nas charnecas inglesas." },
+            { id: 45, titulo: "Caixa de Pássaros", autor: "Josh Malerman", paginas: 280, genero: "Suspense", trilha: "Ficção", capa: "bg-zinc-800 text-white", sinopse: "A sobrevivência vendada contra criaturas que causam loucura." },
+            { id: 46, titulo: "O Código Da Vinci", autor: "Dan Brown", paginas: 432, genero: "Thriller", trilha: "Ficção", capa: "bg-red-800 text-white", sinopse: "Mistérios da história da arte e sociedades secretas em Paris." },
+            { id: 47, titulo: "Alice no País das Maravilhas", autor: "Lewis Carroll", paginas: 160, genero: "Fantasia", trilha: "Ficção", capa: "bg-blue-300 text-blue-900", sinopse: "Uma jornada surreal que desafia toda a lógica convencional." },
+
+            // TRILHA: INFANTOJUVENIL & OUTROS
+            { id: 48, titulo: "O Meu Pé de Laranja Lima", autor: "J. M. Vasconcelos", paginas: 192, genero: "Drama", trilha: "Juvenil", capa: "bg-green-50 text-green-900", sinopse: "A infância sofrida e a riqueza da imaginação do menino Zezé." },
+            { id: 49, titulo: "Pax", autor: "Sara Pennypacker", paginas: 280, genero: "Aventura", trilha: "Juvenil", capa: "bg-orange-100 text-orange-900", sinopse: "A amizade inquebrável entre um menino e sua raposa em meio à guerra." },
+            { id: 50, titulo: "Feliz por Nada", autor: "Martha Medeiros", paginas: 224, genero: "Crônicas", trilha: "Reflexão", capa: "bg-pink-100 text-pink-800", sinopse: "Crônicas sobre a felicidade cotidiana." },
+            { id: 51, titulo: "O Alquimista", autor: "Paulo Coelho", paginas: 208, genero: "Fábula", trilha: "Reflexão", capa: "bg-yellow-500 text-white", sinopse: "Siga o seu coração para encontrar seu tesouro." }
         ];
 
         const App = () => {
-            const [activeTab, setActiveTab] = useState('Home');
-            const [searchTerm, setSearchTerm] = useState("");
-            const [selectedBook, setSelectedBook] = useState(null);
+            const [tab, setTab] = useState('Home');
+            const [search, setSearch] = useState("");
+            const [selected, setSelected] = useState(null);
             const [filter, setFilter] = useState("Todos");
 
-            // Atualiza ícones após mudanças de estado
-            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [activeTab, filter, selectedBook, searchTerm]);
-
             const filteredBooks = useMemo(() => {
-                return ALL_BOOKS.filter(b => {
-                    const matchesSearch = b.titulo.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                          b.autor.toLowerCase().includes(searchTerm.toLowerCase());
+                return LIBRARY_DATA.filter(b => {
+                    const matchesSearch = b.titulo.toLowerCase().includes(search.toLowerCase()) || 
+                                          b.autor.toLowerCase().includes(search.toLowerCase());
                     const matchesFilter = filter === "Todos" || b.trilha === filter;
                     return matchesSearch && matchesFilter;
                 });
-            }, [searchTerm, filter]);
+            }, [search, filter]);
 
-            const trilhas = ["Todos", ...new Set(ALL_BOOKS.map(b => b.trilha))];
+            const trilhas = ["Todos", ...new Set(LIBRARY_DATA.map(b => b.trilha))];
 
             return (
-                <div className="min-h-screen flex flex-col bg-slate-50 max-w-2xl mx-auto shadow-2xl relative overflow-x-hidden border-x border-slate-100">
+                <div className="min-h-screen flex flex-col bg-slate-50 max-w-lg mx-auto shadow-2xl relative border-x border-slate-200">
                     
-                    {/* Cabeçalho */}
+                    {/* Header */}
                     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl px-6 py-6 flex items-center justify-between border-b border-slate-100">
                         <div>
                             <h1 className="text-2xl font-serif font-black text-indigo-950">BiblioConnect</h1>
-                            <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Sua Mente Expandida</p>
+                            <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Acervo Completo ({LIBRARY_DATA.length})</p>
                         </div>
-                        <div className="bg-indigo-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
-                            <Icon name="book-open" size={24} />
+                        <div className="bg-indigo-600 text-white w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                            <Icon name="library" size={20} />
                         </div>
                     </header>
 
                     {/* Conteúdo Principal */}
-                    <main className="flex-1 px-6 pt-6 pb-28">
+                    <main className="flex-1 px-6 pt-6 pb-28 overflow-y-auto no-scrollbar">
                         
-                        {activeTab === 'Home' && (
-                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                {/* Banner de Boas-Vindas */}
-                                <section className="bg-gradient-to-br from-indigo-700 to-indigo-900 rounded-[40px] p-8 text-white shadow-xl relative overflow-hidden">
+                        {tab === 'Home' && (
+                            <div className="space-y-8 fade-in">
+                                <section className="bg-indigo-700 rounded-[40px] p-8 text-white shadow-xl relative overflow-hidden">
                                     <div className="relative z-10">
-                                        <h2 className="text-2xl font-serif italic mb-2">Qual o plano para hoje?</h2>
-                                        <p className="text-indigo-100 text-sm mb-6 max-w-[200px]">Você tem {ALL_BOOKS.length} livros catalogados na sua estante.</p>
-                                        <button 
-                                            onClick={() => setActiveTab('Estante')}
-                                            className="bg-white text-indigo-950 px-8 py-3 rounded-2xl text-xs font-black flex items-center gap-2 active:scale-95 transition-all shadow-lg"
-                                        >
-                                            Explorar Estante <Icon name="chevron-right" size={14} />
-                                        </button>
+                                        <h2 className="text-2xl font-serif italic mb-2 leading-tight">Boas festas e boas leituras!</h2>
+                                        <p className="text-indigo-100 text-xs mb-6 uppercase font-bold tracking-widest">3 Sugestões para o seu Dezembro</p>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setTab('Estante')} className="bg-white text-indigo-950 px-6 py-3 rounded-2xl text-[10px] font-black uppercase shadow-lg">Abrir Estante</button>
+                                        </div>
                                     </div>
-                                    <Icon name="sparkles" className="absolute -right-8 -bottom-8 text-white/10 w-48 h-48" />
+                                    <Icon name="sparkles" className="absolute -right-6 -bottom-6 text-white/10 w-40 h-40" />
                                 </section>
 
-                                {/* Indicações Especiais */}
                                 <section>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
-                                            <Icon name="award" size={20} className="text-amber-500" /> Especial Fim de Ano
-                                        </h3>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        {ALL_BOOKS.filter(b => b.destaque).map(book => (
-                                            <div key={book.id} onClick={() => setSelectedBook(book)} className="bg-white p-5 rounded-[32px] border border-slate-100 flex items-center gap-5 cursor-pointer active:scale-[0.98] transition-all shadow-sm hover:shadow-md">
-                                                <div className={`w-16 h-20 rounded-2xl flex items-center justify-center text-[8px] font-bold text-center p-2 shadow-inner ${book.capa}`}>{book.titulo}</div>
+                                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                        <Icon name="calendar" size={18} className="text-indigo-500" /> Indicações Fim de Ano
+                                    </h3>
+                                    <div className="space-y-4">
+                                        {LIBRARY_DATA.filter(b => b.destaque).map(book => (
+                                            <div key={book.id} onClick={() => setSelected(book)} className="bg-white p-5 rounded-[32px] border border-slate-100 flex items-center gap-4 cursor-pointer active:scale-95 transition-all shadow-sm">
+                                                <div className={`w-14 h-18 rounded-2xl flex items-center justify-center text-[6px] font-bold text-center p-2 shadow-inner ${book.capa}`}>{book.titulo}</div>
                                                 <div className="flex-1">
-                                                    <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">{book.destaque}</span>
-                                                    <h4 className="font-bold text-slate-800">{book.titulo}</h4>
-                                                    <p className="text-xs text-slate-400">{book.autor}</p>
+                                                    <h4 className="font-bold text-sm text-slate-800">{book.titulo}</h4>
+                                                    <p className="text-[10px] text-slate-400">{book.autor}</p>
                                                 </div>
-                                                <Icon name="chevron-right" size={20} className="text-slate-300" />
+                                                <Icon name="chevron-right" size={18} className="text-slate-200" />
                                             </div>
                                         ))}
                                     </div>
                                 </section>
-
-                                {/* Frase Inspiradora */}
-                                <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
-                                    <Icon name="quote" className="text-indigo-100 mb-2" size={32} />
-                                    <p className="italic text-slate-600 text-base leading-relaxed font-medium">
-                                        "Um livro é um dispositivo para acender a imaginação."
-                                    </p>
-                                </div>
                             </div>
                         )}
 
-                        {activeTab === 'Estante' && (
-                            <div className="space-y-6 animate-in fade-in duration-300">
-                                {/* Barra de Pesquisa */}
+                        {tab === 'Estante' && (
+                            <div className="space-y-6 fade-in">
                                 <div className="space-y-4">
                                     <div className="relative group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors">
-                                            <Icon name="search" size={20} />
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                            <Icon name="search" size={18} />
                                         </div>
                                         <input 
                                             type="text" 
-                                            placeholder="Qual livro você procura?"
-                                            className="w-full bg-white rounded-[24px] py-5 pl-14 pr-6 text-sm font-semibold border border-slate-200 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 transition-all"
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            placeholder="Busque por título ou autor..."
+                                            className="w-full bg-white rounded-2xl py-4 pl-12 pr-4 text-sm font-semibold border border-slate-200 focus:border-indigo-400 transition-all outline-none"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
                                         />
                                     </div>
-                                    
-                                    {/* Filtros de Trilha */}
-                                    <div className="flex gap-2 overflow-x-auto no-scrollbar py-2 -mx-6 px-6">
+                                    <div className="flex gap-2 overflow-x-auto no-scrollbar py-1 -mx-6 px-6">
                                         {trilhas.map(t => (
                                             <button 
                                                 key={t}
@@ -175,111 +203,106 @@
                                     </div>
                                 </div>
 
-                                {/* Grade de Livros */}
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-2 gap-4">
                                     {filteredBooks.map(book => (
-                                        <div key={book.id} onClick={() => setSelectedBook(book)} className="bg-white rounded-[40px] p-4 border border-slate-100 shadow-sm active:scale-95 transition-all cursor-pointer group">
-                                            <div className={`aspect-[3/4] rounded-[28px] mb-4 flex flex-col items-center justify-center p-6 text-center shadow-inner relative overflow-hidden ${book.capa}`}>
-                                                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                <h4 className="font-serif font-bold text-[10px] sm:text-xs italic leading-tight z-10">{book.titulo}</h4>
-                                                <p className="text-[8px] mt-2 opacity-60 font-bold z-10">{book.autor}</p>
+                                        <div key={book.id} onClick={() => setSelected(book)} className="bg-white rounded-[32px] p-4 border border-slate-100 shadow-sm active:scale-95 transition-all">
+                                            <div className={`aspect-[3/4] rounded-2xl mb-3 flex flex-col items-center justify-center p-4 text-center shadow-inner relative overflow-hidden ${book.capa}`}>
+                                                <div className="absolute inset-0 bg-black/5"></div>
+                                                <h4 className="font-serif font-bold text-[10px] italic leading-tight z-10">{book.titulo}</h4>
                                             </div>
-                                            <h3 className="font-bold text-xs px-1 text-slate-800 truncate">{book.titulo}</h3>
-                                            <p className="text-[9px] px-1 text-indigo-500 font-black uppercase mt-1 tracking-tighter">{book.trilha}</p>
+                                            <h3 className="font-bold text-xs truncate text-slate-800">{book.titulo}</h3>
+                                            <p className="text-[9px] text-slate-400 font-bold uppercase mt-1">{book.trilha}</p>
                                         </div>
                                     ))}
                                 </div>
-                                {filteredBooks.length === 0 && (
-                                    <div className="text-center py-20 opacity-40">
-                                        <Icon name="search-x" className="mx-auto mb-2" size={40} />
-                                        <p className="font-bold">Nenhum livro encontrado.</p>
+                            </div>
+                        )}
+
+                        {tab === 'Dados' && (
+                            <div className="fade-in space-y-8 py-10 text-center">
+                                <div className="w-48 h-48 bg-white rounded-full mx-auto flex items-center justify-center shadow-xl border-8 border-indigo-50 relative">
+                                    <div className="z-10">
+                                        <p className="text-5xl font-serif font-black text-indigo-950">
+                                            {LIBRARY_DATA.reduce((acc, b) => acc + b.paginas, 0).toLocaleString()}
+                                        </p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Páginas Totais</p>
                                     </div>
-                                )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
+                                        <p className="text-2xl font-black text-indigo-600">{trilhas.length - 1}</p>
+                                        <p className="text-[9px] font-bold uppercase text-slate-400">Trilhas de Saber</p>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
+                                        <p className="text-2xl font-black text-indigo-600">{LIBRARY_DATA.length}</p>
+                                        <p className="text-[9px] font-bold uppercase text-slate-400">Obras no Acervo</p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </main>
 
                     {/* Barra de Navegação Inferior */}
-                    <nav className="fixed bottom-6 left-6 right-6 bg-white/80 backdrop-blur-2xl border border-slate-200 rounded-full px-10 py-5 shadow-2xl z-40 flex items-center justify-between">
-                        <button onClick={() => setActiveTab('Home')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'Home' ? "active-tab" : "text-slate-400"}`}>
-                            <Icon name="home" size={24} strokeWidth={activeTab === 'Home' ? 2.5 : 2} />
-                            <span className="text-[9px] font-black uppercase tracking-tighter">Início</span>
+                    <nav className="fixed bottom-6 left-6 right-6 glass-effect rounded-[32px] px-8 py-5 shadow-2xl z-50 flex items-center justify-between border border-white/40">
+                        <button onClick={() => setTab('Home')} className={`flex flex-col items-center gap-1.5 transition-all ${tab === 'Home' ? "active-tab text-indigo-600" : "text-slate-400"}`}>
+                            <Icon name="home" size={24} strokeWidth={tab === 'Home' ? 2.5 : 2} />
+                            <span className="text-[8px] font-black uppercase tracking-widest">Início</span>
                         </button>
-                        <button onClick={() => setActiveTab('Estante')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'Estante' ? "active-tab" : "text-slate-400"}`}>
-                            <Icon name="layout-grid" size={24} strokeWidth={activeTab === 'Estante' ? 2.5 : 2} />
-                            <span className="text-[9px] font-black uppercase tracking-tighter">Estante</span>
+                        <button onClick={() => setTab('Estante')} className={`flex flex-col items-center gap-1.5 transition-all ${tab === 'Estante' ? "active-tab text-indigo-600" : "text-slate-400"}`}>
+                            <Icon name="layout-grid" size={24} strokeWidth={tab === 'Estante' ? 2.5 : 2} />
+                            <span className="text-[8px] font-black uppercase tracking-widest">Estante</span>
                         </button>
-                        <button onClick={() => setActiveTab('Home')} className="flex flex-col items-center gap-1.5 text-slate-400 opacity-30">
-                            <Icon name="pie-chart" size={24} />
-                            <span className="text-[9px] font-black uppercase tracking-tighter">Dados</span>
+                        <button onClick={() => setTab('Dados')} className={`flex flex-col items-center gap-1.5 transition-all ${tab === 'Dados' ? "active-tab text-indigo-600" : "text-slate-400"}`}>
+                            <Icon name="pie-chart" size={24} strokeWidth={tab === 'Dados' ? 2.5 : 2} />
+                            <span className="text-[8px] font-black uppercase tracking-widest">Dados</span>
                         </button>
                     </nav>
 
-                    {/* Modal de Detalhes */}
-                    {selectedBook && (
-                        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-end justify-center p-4 animate-in fade-in duration-300">
-                            <div className="bg-white w-full max-w-lg rounded-[48px] p-10 animate-in slide-in-from-bottom duration-500 max-h-[85vh] overflow-y-auto relative">
-                                <button 
-                                    onClick={() => setSelectedBook(null)} 
-                                    className="absolute top-8 right-8 bg-slate-100 p-3 rounded-full text-slate-400 active:scale-90 transition-all"
-                                >
-                                    <Icon name="x" size={20} />
-                                </button>
+                    {/* Modal Detalhes */}
+                    {selected && (
+                        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-end justify-center p-4 fade-in">
+                            <div className="bg-white w-full max-w-lg rounded-[48px] p-8 pb-10 animate-in slide-in-from-bottom duration-500 max-h-[90vh] overflow-y-auto relative shadow-2xl">
+                                <button onClick={() => setSelected(null)} className="absolute top-8 right-8 bg-slate-100 p-3 rounded-full text-slate-400 active:scale-90 transition-all"><Icon name="x" size={20} /></button>
                                 
                                 <div className="mb-8">
-                                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-2 block">{selectedBook.trilha}</span>
-                                    <h2 className="text-4xl font-serif font-black text-slate-900 leading-tight mb-2">{selectedBook.titulo}</h2>
-                                    <p className="text-lg text-slate-400 font-medium italic">{selectedBook.autor}</p>
+                                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-3 block">{selected.trilha}</span>
+                                    <h2 className="text-3xl font-serif font-black text-slate-950 leading-tight mb-1">{selected.titulo}</h2>
+                                    <p className="text-base text-slate-400 font-medium italic">{selected.autor}</p>
                                 </div>
                                 
-                                <div className="grid grid-cols-3 gap-4 mb-10">
-                                    <div className="bg-slate-50 px-4 py-5 rounded-[32px] border border-slate-100 text-center">
+                                <div className="grid grid-cols-3 gap-3 mb-10 text-center">
+                                    <div className="bg-slate-50 p-4 rounded-[28px] border border-slate-100">
                                         <Icon name="book-text" size={18} className="mx-auto mb-2 text-indigo-500" />
-                                        <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest">Páginas</p>
-                                        <p className="font-black text-base">{selectedBook.paginas}</p>
+                                        <p className="text-[8px] text-slate-400 uppercase font-black">Páginas</p>
+                                        <p className="font-black text-base text-slate-800">{selected.paginas}</p>
                                     </div>
-                                    <div className="bg-slate-50 px-4 py-5 rounded-[32px] border border-slate-100 text-center">
+                                    <div className="bg-slate-50 p-4 rounded-[28px] border border-slate-100">
                                         <Icon name="clock" size={18} className="mx-auto mb-2 text-indigo-500" />
-                                        <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest">Leitura</p>
-                                        <p className="font-black text-base">~{Math.round(selectedBook.paginas/40)}h</p>
+                                        <p className="text-[8px] text-slate-400 uppercase font-black">Tempo</p>
+                                        <p className="font-black text-base text-slate-800">~{Math.round(selected.paginas/40)}h</p>
                                     </div>
-                                    <div className="bg-slate-50 px-4 py-5 rounded-[32px] border border-slate-100 text-center">
-                                        <Icon name="tag" size={18} className="mx-auto mb-2 text-indigo-500" />
-                                        <p className="text-[8px] text-slate-400 uppercase font-black tracking-widest">Gênero</p>
-                                        <p className="font-black text-[9px] uppercase leading-tight truncate">{selectedBook.genero}</p>
+                                    <div className="bg-slate-50 p-4 rounded-[28px] border border-slate-100 text-[9px] flex flex-col items-center justify-center font-black uppercase text-indigo-600 tracking-tighter leading-none">
+                                        <Icon name="award" size={18} className="mb-1 text-indigo-500" />
+                                        {selected.trilha}
                                     </div>
                                 </div>
 
                                 <div className="mb-10">
-                                    <h3 className="font-black text-[11px] uppercase text-slate-900 tracking-widest mb-4 flex items-center gap-2">
-                                        <Icon name="info" size={16} className="text-indigo-500" /> Sinopse Oficial
+                                    <h3 className="font-black text-[10px] uppercase text-slate-900 tracking-[0.15em] mb-4 flex items-center gap-2">
+                                        <Icon name="info" size={14} /> Sobre a Obra
                                     </h3>
-                                    <p className="text-slate-600 text-base leading-relaxed font-medium">
-                                        {selectedBook.sinopse}
+                                    <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                                        {selected.sinopse}
                                     </p>
                                 </div>
 
-                                <div className="bg-indigo-50 rounded-[40px] p-8 mb-10 border border-indigo-100 relative overflow-hidden">
-                                    <div className="relative z-10">
-                                        <h4 className="text-[11px] font-black uppercase text-indigo-800 mb-4 flex items-center gap-2 tracking-widest">
-                                            <Icon name="message-circle" size={16} /> Meu Diário de Insight
-                                        </h4>
-                                        <textarea 
-                                            className="w-full bg-white/70 backdrop-blur-sm border border-indigo-100 rounded-3xl p-5 text-sm font-medium focus:bg-white focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-indigo-200 min-h-[120px]" 
-                                            placeholder="O que este livro está te ensinando agora?"
-                                        ></textarea>
-                                    </div>
-                                    <Icon name="brain" className="absolute -right-4 -bottom-4 text-indigo-600/5 w-32 h-32" />
-                                </div>
-
                                 <button 
-                                    onClick={() => alert(`Iniciando discussão sobre: ${selectedBook.titulo}`)}
-                                    className="w-full bg-indigo-950 text-white font-black py-6 rounded-[32px] flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-xl shadow-indigo-100 text-lg"
+                                    onClick={() => alert(`Iniciando discussão sobre: ${selected.titulo}`)}
+                                    className="w-full bg-indigo-950 text-white font-black py-6 rounded-[32px] flex items-center justify-center gap-3 active:scale-95 transition-all shadow-2xl shadow-indigo-100 text-base"
                                 >
                                     <Icon name="message-square" size={24} /> 
                                     "vamos conversar sobre esse livro"
                                 </button>
-                                <div className="h-6"></div>
                             </div>
                         </div>
                     )}
